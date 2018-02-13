@@ -6,6 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 
+import com.jnit.pojo.KafkaMessage;
+
 public class Receiver {
 
   private static final Logger LOGGER =
@@ -18,8 +20,9 @@ public class Receiver {
   }
 
   @KafkaListener(topics = "${kafka.topic.helloworld}")
-  public void receive(String payload) {
+  public void receive(KafkaMessage payload) {
     LOGGER.info("received payload='{}'", payload);
     latch.countDown();
+        
   }
 }
