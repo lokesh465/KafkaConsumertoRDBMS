@@ -101,33 +101,42 @@ private boolean containsContractIdentifier(String jsonString, String contractID)
     var objectMapper = new ObjectMapper();
     try {
         var rootNode = objectMapper.readTree(jsonString);
-        return findContractIdentifier(rootNode, contractID);
+        return findInNode(rootNode, contractID);
     } catch (Exception e) {
         throw new RuntimeException("Error parsing JSON", e);
     }
 }
 
-private boolean findContractIdentifier(JsonNode rootNode, String contractID) {
-    if (rootNode.isObject()) {
-        for (var entry : iterable(rootNode.fields())) {
-            if (entry.getKey().equals("contractIdentifier") && entry.getValue().asText().equals(contractID)) {
-                return true;
-            }
-            if (findContractIdentifier(entry.getValue(), contractID)) {
-                return true;
-            }
+private boolean findInNode(JsonNode node, String contractID) {
+    if (node.isObject()) {
+        return findInObject(node, contractID);
+    } else if (node.isArray()) {
+        return findInArray(node, contractID);
+    }
+    return false;
+}
+
+private boolean findInObject(JsonNode node, String contractID) {
+    for (var entry : iterable(node.fields())) {
+        if (entry.getKey().equals("contractIdentifier") && entry.getValue().asText().equals(contractID)) {
+            return true;
         }
-    } else if (rootNode.isArray()) {
-        for (var element : rootNode) {
-            if (findContractIdentifier(element, contractID)) {
-                return true;
-            }
+        if (findInNode(entry.getValue(), contractID)) {
+            return true;
         }
     }
     return false;
 }
 
-// Utility method for iterating over Map.Entry elements (needed for pattern matching)
+private boolean findInArray(JsonNode arrayNode, String contractID) {
+    for (var element : arrayNode) {
+        if (findInNode(element, contractID)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 private static <T> Iterable<T> iterable(Iterator<T> iterator) {
     return () -> iterator;
 }
