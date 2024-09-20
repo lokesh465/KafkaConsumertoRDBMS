@@ -35,6 +35,11 @@ public Mono<Object> fluxParser(String kafkaInContractPayload, String contractIde
             })
             .switchIfEmpty(Mono.defer(() -> {
                 Logger.warn("No document found for Contract Identifier: {}", contractIdentifier);
-                return Mono.just(kafkaInContractPayload);
+
+                // Convert kafkaInContractPayload to Map and return as fallback
+                return Mono.fromCallable(() -> {
+                    var objectMapper = new ObjectMapper();
+                    return objectMapper.readValue(kafkaInContractPayload, Map.class);
+                });
             }));
 }
