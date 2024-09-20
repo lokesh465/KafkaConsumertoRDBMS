@@ -27,10 +27,15 @@ public Mono<Object> fluxParser(String kafkaInContractPayload, String contractIde
                     var mongoMap = objectMapper.readValue(mongoContractPayloadStr, Map.class);
                     var kafkaMap = objectMapper.readValue(kafkaInContractPayload, Map.class);
 
-                    // Merge keys from Kafka into Mongo
-                    kafkaMap.forEach(mongoMap::putIfAbsent);
+                    // Replace or update the values for matching keys
+                    kafkaMap.forEach((key, value) -> {
+                        if (mongoMap.containsKey(key)) {
+                            // Update the value in Mongo map with the value from Kafka
+                            mongoMap.put(key, value);
+                        }
+                    });
 
-                    return mongoMap;
+                    return (Object) mongoMap;  // Casting to Object
                 });
             })
             .switchIfEmpty(Mono.defer(() -> {
@@ -39,7 +44,7 @@ public Mono<Object> fluxParser(String kafkaInContractPayload, String contractIde
                 // Convert kafkaInContractPayload to Map and return as fallback
                 return Mono.fromCallable(() -> {
                     var objectMapper = new ObjectMapper();
-                    return objectMapper.readValue(kafkaInContractPayload, Map.class);
+                    return (Object) objectMapper.readValue(kafkaInContractPayload, Map.class);  // Casting to Object
                 });
             }));
 }
